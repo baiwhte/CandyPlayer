@@ -52,8 +52,8 @@
     [self addSubview:self.fullScreenButton];
     [self initCommand];
     [self changeRate];
-    self.playButton.selected       = RACObserve(self, playOrPause).deliverOnMainThread;
-    self.fullScreenButton.selected = RACObserve(self, fullScreen).deliverOnMainThread;
+//    self.playButton.selected       = RACObserve(self, playOrPause).deliverOnMainThread;
+//    self.fullScreenButton.selected = RACObserve(self, fullScreen).deliverOnMainThread;
 }
 
 - (void)initCommand {
