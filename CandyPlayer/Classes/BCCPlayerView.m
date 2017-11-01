@@ -18,7 +18,6 @@
 #import <MediaPlayer/MediaPlayer.h>
 
 /*! three lib  */
-#import <Masonry/Masonry.h>
 #import <ReactiveObjC/ReactiveObjC.h>
 
 @interface BCCPlayerView()
@@ -70,13 +69,9 @@
 - (void)layoutSubviews {
     [super layoutSubviews];
     
-    [self.controlView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.mas_equalTo(UIEdgeInsetsZero);
-    }];
+    self.controlView.frame = self.bounds;
+    self.playbackView.frame = self.bounds;
     
-    [self.playbackView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.mas_equalTo(UIEdgeInsetsZero);
-    }];
 }
 
 - (void)initialize {

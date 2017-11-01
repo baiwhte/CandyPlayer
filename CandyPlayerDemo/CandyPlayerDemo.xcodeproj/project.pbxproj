@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0EDC19D3B191AE300CEC68C2 /* libPods-CandyPlayerDemo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 43926403BAB0F57646ED2CCD /* libPods-CandyPlayerDemo.a */; };
 		B482EE4C1FA95E3D001BE0FC /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B482EE4B1FA95E3D001BE0FC /* AppDelegate.m */; };
 		B482EE4F1FA95E3D001BE0FC /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B482EE4E1FA95E3D001BE0FC /* ViewController.m */; };
 		B482EE521FA95E3D001BE0FC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B482EE501FA95E3D001BE0FC /* Main.storyboard */; };
@@ -16,6 +17,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		43926403BAB0F57646ED2CCD /* libPods-CandyPlayerDemo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CandyPlayerDemo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B482EE471FA95E3D001BE0FC /* CandyPlayerDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CandyPlayerDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B482EE4A1FA95E3D001BE0FC /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		B482EE4B1FA95E3D001BE0FC /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -26,6 +28,8 @@
 		B482EE561FA95E3D001BE0FC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B482EE581FA95E3D001BE0FC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B482EE591FA95E3D001BE0FC /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		E0954DA98C4FC6A4814CE1BA /* Pods-CandyPlayerDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CandyPlayerDemo.release.xcconfig"; path = "Pods/Target Support Files/Pods-CandyPlayerDemo/Pods-CandyPlayerDemo.release.xcconfig"; sourceTree = "<group>"; };
+		E88E2529698B298EE10EC877 /* Pods-CandyPlayerDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CandyPlayerDemo.debug.xcconfig"; path = "Pods/Target Support Files/Pods-CandyPlayerDemo/Pods-CandyPlayerDemo.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -33,17 +37,29 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0EDC19D3B191AE300CEC68C2 /* libPods-CandyPlayerDemo.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B1FC44BFFF772CE46619696C /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				E88E2529698B298EE10EC877 /* Pods-CandyPlayerDemo.debug.xcconfig */,
+				E0954DA98C4FC6A4814CE1BA /* Pods-CandyPlayerDemo.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
 		B482EE3E1FA95E3D001BE0FC = {
 			isa = PBXGroup;
 			children = (
 				B482EE491FA95E3D001BE0FC /* CandyPlayerDemo */,
 				B482EE481FA95E3D001BE0FC /* Products */,
+				B1FC44BFFF772CE46619696C /* Pods */,
+				C7FA601C2D2022FB2B260C83 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -71,6 +87,14 @@
 			path = CandyPlayerDemo;
 			sourceTree = "<group>";
 		};
+		C7FA601C2D2022FB2B260C83 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				43926403BAB0F57646ED2CCD /* libPods-CandyPlayerDemo.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -78,9 +102,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B482EE5D1FA95E3D001BE0FC /* Build configuration list for PBXNativeTarget "CandyPlayerDemo" */;
 			buildPhases = (
+				8C87D5B9A5E03D17B861801F /* [CP] Check Pods Manifest.lock */,
 				B482EE431FA95E3D001BE0FC /* Sources */,
 				B482EE441FA95E3D001BE0FC /* Frameworks */,
 				B482EE451FA95E3D001BE0FC /* Resources */,
+				192B172EC6AE4A6BD71B5244 /* [CP] Embed Pods Frameworks */,
+				37D6B59A40DC53D451B00A64 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -136,6 +163,54 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		192B172EC6AE4A6BD71B5244 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-CandyPlayerDemo/Pods-CandyPlayerDemo-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		37D6B59A40DC53D451B00A64 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-CandyPlayerDemo/Pods-CandyPlayerDemo-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		8C87D5B9A5E03D17B861801F /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B482EE431FA95E3D001BE0FC /* Sources */ = {
@@ -276,6 +351,7 @@
 		};
 		B482EE5E1FA95E3D001BE0FC /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E88E2529698B298EE10EC877 /* Pods-CandyPlayerDemo.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
@@ -290,6 +366,7 @@
 		};
 		B482EE5F1FA95E3D001BE0FC /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E0954DA98C4FC6A4814CE1BA /* Pods-CandyPlayerDemo.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;

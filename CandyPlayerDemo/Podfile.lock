@@ -1,0 +1,19 @@
+PODS:
+  - CandyPlayer (0.0.1):
+    - ReactiveObjC (~> 3.0.0)
+  - ReactiveObjC (3.0.0)
+
+DEPENDENCIES:
+  - CandyPlayer (from `../`)
+
+EXTERNAL SOURCES:
+  CandyPlayer:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  CandyPlayer: ec5a0d05436f6450f4b3e79eff2a79724d857970
+  ReactiveObjC: ce79989e8684b9086b5f8d0c74bc7b81a8729c9e
+
+PODFILE CHECKSUM: 3f1c887c819d5a35f44b4d92bd6d31849f8a8f57
+
+COCOAPODS: 1.2.0
