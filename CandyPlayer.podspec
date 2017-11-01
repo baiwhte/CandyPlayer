@@ -25,6 +25,8 @@ Pod::Spec.new do |s|
   #   * Write the description between the DESC delimiters below.
   #   * Finally, don't worry about the indent, CocoaPods strips it!
   s.description  = <<-DESC
+* Fully customizable UI
+* Orientation change support
                    DESC
 
   s.homepage     = "https://github.com/baiwhte/CandyPlayer"
