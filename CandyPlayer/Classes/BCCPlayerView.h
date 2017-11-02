@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
+#import "BCCPlayerItem.h"
+
 typedef NS_ENUM(NSInteger, BCCPlayerStatus) {
     BCCPlayerStatusFailed,     // 播放失败
     BCCPlayerStatusBuffering,  // 缓冲中
@@ -21,6 +23,7 @@ typedef NS_ENUM(NSInteger, BCCPlayerStatus) {
 @interface BCCPlayerView : UIView
 
 @property (nonatomic, assign) BOOL allowPreview;
+@property (nonatomic, assign) BOOL allowPlaybackInBackground;
 
 /*!  Device is horizontal screen 是否为横屏 */
 @property(nonatomic, readonly, getter=isHorizontalScreen) BOOL horizontalScreen;
@@ -28,5 +31,7 @@ typedef NS_ENUM(NSInteger, BCCPlayerStatus) {
 @property(nonatomic, readonly) BCCPlayerStatus status;
 
 - (void)playbackWithPlyerItem:(BCCPlayerItem *)playerItem inContainerView:(UIView *)containerView;
+
+- (void)switchPlayerViewFrame:(BOOL)toFullScreen;
 
 @end

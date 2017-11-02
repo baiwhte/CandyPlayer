@@ -2,29 +2,28 @@
 //  BCCBottomView.h
 //  CandyPlayer
 //
-//  Created by 陈修武 on 2017/9/25.
+//  Created by baiwhte on 2017/9/25.
 //  Copyright © 2017年 baiwhte. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "BCCBaseView.h"
 
-@class RACCommand;
 @class RACReplaySubject;
 
-@interface BCCBottomView : UIView
+@interface BCCBottomView : BCCBaseView
 
-@property (nonatomic, assign) BOOL playOrPause;
 @property (nonatomic, assign) BOOL fullScreen;
 
-@property (nonatomic, strong, readonly) RACCommand *playCommand;
+@property (nonatomic, assign) BOOL isPlayback;
+/** 当前时间 */
+@property (nonatomic, assign) Float64 currentTime;
+/** 视频总时间 */
+@property (nonatomic, assign) Float64 duration;
+/** 缓冲时间 */
+@property (nonatomic, assign) CGFloat   bufferValue;
 
-@property (nonatomic, strong, readonly) RACCommand *fullScreenCommand;
+@property (nonatomic, assign) BOOL hideScreenButton;
 
 @property (nonatomic, strong, readonly) RACReplaySubject *subject;
-
-@property (nonatomic, strong) NSString *currentTime;
-@property (nonatomic, strong) NSString *totalTime;
-@property (nonatomic, assign) CGFloat  sliderValue;
-@property (nonatomic, assign) CGFloat  progressViewValue;
 
 @end

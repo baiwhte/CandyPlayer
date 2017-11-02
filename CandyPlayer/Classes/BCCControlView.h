@@ -8,17 +8,18 @@
 
 #import <UIKit/UIKit.h>
 
-@class BCCPlayerView;
 @class RACReplaySubject;
 
 @interface BCCControlView : UIView
 
-@property (nonatomic, weak) BCCPlayerView *playerView;
-
 @property (nonatomic, strong) RACReplaySubject *sliderSubject;
 
+@property (nonatomic, assign) BOOL fullScreen;
+@property (nonatomic, assign) BOOL isPlayback;
+@property (nonatomic, assign) BOOL isBuffering;
+
 @property (nonatomic, assign) Float64 currentTime;
-@property (nonatomic, assign) CGFloat duration;
+@property (nonatomic, assign) Float64 duration;
 
 @property (nonatomic, assign) CGFloat bufferValue;
 

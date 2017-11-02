@@ -10,7 +10,6 @@
 
 #import "BCCTopView.h"
 #import "BCCBottomView.h"
-#import "BCCPlayerView.h"
 
 #import <ReactiveObjC/ReactiveObjC.h>
 
@@ -19,6 +18,9 @@
 @property (nonatomic, strong) BCCTopView              *topView;
 @property (nonatomic, strong) BCCBottomView           *bottomView;
 
+//@property (nonatomic, strong) BCCVideoTypeView *videoTypeView;
+//@property (nonatomic, strong) BCCSettingView *settingView;
+
 @property (nonatomic, strong) UIButton                *lockButton;
 
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
@@ -26,6 +28,8 @@
 @property (nonatomic, assign) BOOL                     dragForward;
 /*! 拖动时滑块的最新位置  */
 @property (nonatomic, assign) CGFloat                  lastDragValue;
+
+@property (nonatomic, assign) BOOL hasAddTopView;
 
 @end
 
@@ -48,6 +52,20 @@
 
 - (void)layoutSubviews {
     [super layoutSubviews];
+    
+    CGSize size = self.bounds.size;
+    if (CGSizeEqualToSize(size, CGSizeZero)) { return; }
+    
+    CGFloat height = 44;
+    
+    self.bottomView.frame = CGRectMake(0, size.height - height, size.width, height);
+    if (self.hasAddTopView) {
+        self.topView.frame = CGRectMake(0, 0, size.width, height + 20);
+    }
+    self.indicatorView.center = self.center;
+    
+//    _settingView.frame = self.bounds;
+//    _videoTypeView.frame = self.bounds;
 }
 
 - (void)initialize {
@@ -56,13 +74,7 @@
     [self addSubview:self.indicatorView];
     [self addSubview:self.bottomView];
     @weakify(self)
-    [self.bottomView.playCommand.executionSignals subscribeCompleted:^{
-        
-    }];
-    
-    [self.bottomView.fullScreenCommand.executionSignals subscribeCompleted:^{
-        
-    }];
+
     _sliderSubject = [RACReplaySubject subject];
     [self.bottomView.subject subscribeNext:^(NSNumber *number) {
         @strongify(self)
@@ -77,67 +89,27 @@
             self.lastDragValue = number.floatValue;
             //计算出拖动的当前秒数
             CGFloat dragedSeconds = floorf(self.duration * number.floatValue);
-            self.bottomView.currentTime = [self stringByPlaySeconds:dragedSeconds];
-            if (self.playerView.allowPreview) {
-                [self.sliderSubject sendNext:number];
-            }
+    
         }
     }];
     
-    
-    [[RACObserve(self.playerView, status) skip:1]
-     subscribeNext:^(NSNumber *number) {
-         @strongify(self)
-         self.bottomView.playOrPause = (number.integerValue == BCCPlayerStatusPlaying);
-         if (number.integerValue == BCCPlayerStatusPlaying) {
-             [self.indicatorView stopAnimating];
-         } else if (number.integerValue == BCCPlayerStatusBuffering) {
-             [self.indicatorView startAnimating];
-         }
-     }];
-    RACSignal *fullScreenSignal = RACObserve(self.playerView, horizontalScreen);
-    RAC(self.bottomView, fullScreen) = fullScreenSignal.deliverOnMainThread;
-    [[fullScreenSignal skip:1] subscribeNext:^(NSNumber *number) {
+    RACSignal *bufferSignal = RACObserve(self, isBuffering);
+    [bufferSignal subscribeNext:^(NSNumber * x) {
         @strongify(self)
-        if (number.boolValue) {
-            [self addSubview:self.topView];
+        if (!x.boolValue) {
+            [self.indicatorView stopAnimating];
         } else {
-            [self.topView removeFromSuperview];
+            [self.indicatorView startAnimating];
         }
+        self.isPlayback = !x.boolValue;
     }];
     
-    [[[RACSignal combineLatest:@[RACObserve(self, currentTime),
-                                 RACObserve(self, duration)]]
-     deliverOnMainThread]
-     subscribeNext:^(RACTuple * tuple) {
-         @strongify(self)
-         Float64 cur = [tuple.first doubleValue];
-         NSInteger total = [tuple.second integerValue];
-         if (total == 0) {
-             return ;
-         }
-         self.bottomView.currentTime = [self stringByPlaySeconds:cur];
-         self.bottomView.totalTime   = [self stringByPlaySeconds:total];
-         self.bottomView.sliderValue = (CGFloat)cur / total;
-     }];
-     
-     [RACObserve(self, bufferValue) subscribeNext:^(NSNumber *number) {
-         self.bottomView.progressViewValue = number.floatValue;
-     }];
-    
-    [[RACSignal combineLatest:@[RACObserve(self, currentTime), RACObserve(self, duration)]]
-     subscribeNext:^(RACTuple * tuple) {
-         Float64 cur = [tuple.first doubleValue];
-         NSInteger total = [tuple.second integerValue];
-         if (cur == 0 || total == 0) {
-             return ;
-         }
-     }];
-    
-    [self.topView.backCommand.executionSignals subscribeCompleted:^{
-        
-    }];
-    
+    RACChannelTo(self.bottomView, isPlayback)  = RACChannelTo(self, isPlayback);
+    RACChannelTo(self.bottomView, fullScreen)  = RACChannelTo(self, fullScreen);
+    RACChannelTo(self.bottomView, currentTime) = RACChannelTo(self, currentTime);
+    RACChannelTo(self.bottomView, duration)    = RACChannelTo(self, duration);
+
+
 }
 
 #pragma mark - private methods
@@ -157,14 +129,6 @@
     }];
 }
 
-- (NSString *)stringByPlaySeconds:(Float64)playSeconds {
-    NSInteger nPlaySeconds = (NSInteger)playSeconds;
-    NSInteger hour = nPlaySeconds / 3600;
-    NSInteger minute = (nPlaySeconds - hour * 3600) / 60;
-    NSInteger seconds = nPlaySeconds - hour * 3600 - minute * 60;
-    return [NSString stringWithFormat:@"%.02zd:%.02zd:%.02zd", ABS(hour), ABS(minute), ABS(seconds)];
-}
-
 #pragma mark - properties
 
 - (BCCTopView *)topView {
@@ -175,7 +139,7 @@
 }
 
 - (BCCBottomView *)bottomView {
-    if (_bottomView) {
+    if (_bottomView == nil) {
         _bottomView = [[BCCBottomView alloc] init];
     }
     return _bottomView;
