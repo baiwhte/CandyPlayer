@@ -8,8 +8,6 @@
 
 #import "BCCBaseView.h"
 
-@class RACReplaySubject;
-
 @interface BCCBottomView : BCCBaseView
 
 @property (nonatomic, assign) BOOL fullScreen;
@@ -24,6 +22,6 @@
 
 @property (nonatomic, assign) BOOL hideScreenButton;
 
-@property (nonatomic, strong, readonly) RACReplaySubject *subject;
+@property (nonatomic, assign, readonly) BOOL isDragging;
 
 @end

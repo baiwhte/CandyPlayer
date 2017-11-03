@@ -6,7 +6,7 @@
 //  Copyright © 2017年 Andy. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "BCCBaseView.h"
 
 @class RACSubject;
 
@@ -16,11 +16,14 @@ typedef NS_ENUM(NSInteger, BCCTopButtonType) {
     BCCTopSettingButton
 };
 
-@interface BCCTopView : UIView
+@interface BCCTopView : BCCBaseView
 
 @property (nonatomic, copy) NSString *title;
-@property (nonatomic, assign) BOOL hideQuality;
-@property (nonatomic, copy) NSString *quality;
+
+//@property (nonatomic, assign, readonly) BOOL canGoBack;
+
+//@property (nonatomic, assign) BOOL hideQuality;
+//@property (nonatomic, copy) NSString *quality;
 
 @property (nonatomic, strong, readonly) RACSubject *subject;
 

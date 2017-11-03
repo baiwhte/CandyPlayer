@@ -11,6 +11,8 @@
 #import "BCCControlView.h"
 #import "BCCPlaybackView.h"
 
+#import "BCCMacro.h"
+
 /*! apple framework  */
 #import <AVFoundation/AVFoundation.h>
 #import <MediaPlayer/MediaPlayer.h>
@@ -24,15 +26,16 @@
 @property (nonatomic, strong) AVPlayer               *player;
 @property (nonatomic, strong) AVPlayerItem           *playerItem;
 @property (nonatomic, strong) AVURLAsset             *urlAsset;
+
 @property (nonatomic, strong) AVAssetImageGenerator  *imageGenerator;
 /** set the playerLayer */
 @property (nonatomic, strong) BCCPlaybackView        *playbackView;
 @property (nonatomic, strong) id                     timeObserve;
 /*! control view  */
 @property (nonatomic, strong) BCCControlView         *controlView;
-@property (nonatomic, strong) UIView                 *containterView;
+//MARK：为什么这里设置为strong会产生retain cycle????
+@property (nonatomic, unsafe_unretained) UIView      *containterView;
 
-@property (nonatomic, strong) BCCPlayerItem          *playbackItem;
 /*! 重置订阅信号，若为YES表示不能接收next的值  */
 @property (nonatomic, assign) BOOL                   resetAllSignal;
 
@@ -40,9 +43,8 @@
 
 @property (nonatomic, assign) NSInteger              seekTime;
 @property (nonatomic, assign) BOOL                   localVedio;
-@property (nonatomic, assign) BOOL                   dragging;
-
-@property (nonatomic, assign) BOOL                   ignoreValues;
+@property (nonatomic, assign,
+           getter=isPauseByUser) BOOL                pauseByUser;
 
 @end
 
@@ -50,7 +52,7 @@
 
 - (void)dealloc {
     [self resetPlayer];
-    [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
+    NSLog(@"BCCPlayerView dealloc");
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -75,9 +77,17 @@
     
 }
 
+- (void)willMoveToSuperview:(UIView *)newSuperview {
+    [super willMoveToSuperview:newSuperview];
+    if (newSuperview && ![newSuperview isKindOfClass:UIWindow.class]) {
+        self.containterView = newSuperview;
+    }
+}
+
 - (void)initialize {
     [self addSubview:self.playbackView];
     [self addSubview:self.controlView];
+    
     @weakify(self)
     [RACObserve(self, status) subscribeNext:^(NSNumber * x) {
         @strongify(self)
@@ -100,7 +110,15 @@
         }
     }];
     
-    [RACObserve(self.controlView, isPlayback) subscribeNext:^(NSNumber * x) {
+    [[[RACObserve(self.controlView, isDragging) skip:1] distinctUntilChanged]
+     subscribeNext:^(NSNumber * x) {
+         @strongify(self)
+         if (!x.boolValue) {
+             [self setSeekTime:(NSInteger)self.controlView.currentTime];
+         }
+     }];
+    
+    [[RACObserve(self.controlView, isPlayback) skip:1] subscribeNext:^(NSNumber * x) {
         @strongify(self)
         if (!x.boolValue) {
             [self pause];
@@ -119,6 +137,7 @@
         return @(status == BCCPlayerStatusPlaying);
     }];
      */
+    [self addApplicationNotification];
 }
 
 - (void)resetPlayer {
@@ -129,17 +148,17 @@
     self.imageGenerator = nil;
     self.player = nil;
     self.playerItem = nil;
-    self.playbackItem = nil;
 }
 
 - (void)playbackVideo {
     self.resetAllSignal  = NO;
-    self.urlAsset = [AVURLAsset assetWithURL:self.playbackItem.vedioURL];
+    self.urlAsset = [AVURLAsset assetWithURL:self.controlView.item.vedioURL];
     self.playerItem = [AVPlayerItem playerItemWithAsset:self.urlAsset];
-    
+
     @weakify(self)
     [[RACObserve(self.playerItem, status)
       takeUntilBlock:^BOOL(id  _Nullable x) {
+          @strongify(self)
           return self.resetAllSignal;
       }]
      subscribeNext:^(NSNumber *status) {
@@ -162,6 +181,7 @@
     
     [[RACObserve(self.playerItem, loadedTimeRanges)
       takeUntilBlock:^BOOL(id  _Nullable x) {
+          @strongify(self)
           return self.resetAllSignal;
       }]
      subscribeNext:^(id  _Nullable x) {
@@ -181,6 +201,7 @@
     
     [[RACObserve(self.playerItem, playbackBufferEmpty)
       takeUntilBlock:^BOOL(id  _Nullable x) {
+          @strongify(self)
           return self.resetAllSignal;
       }]
      subscribeNext:^(id  _Nullable x) {
@@ -194,6 +215,7 @@
     
     [[RACObserve(self.playerItem, playbackLikelyToKeepUp)
       takeUntilBlock:^BOOL(id  _Nullable x) {
+          @strongify(self)
           return self.resetAllSignal;
       }]
      subscribeNext:^(NSNumber * x) {
@@ -207,6 +229,7 @@
     [[[[NSNotificationCenter defaultCenter] rac_addObserverForName:AVPlayerItemDidPlayToEndTimeNotification
                                                             object:self.playerItem]
       takeUntilBlock:^BOOL(id  _Nullable x) {
+          @strongify(self)
           return self.resetAllSignal;
       }]
      subscribeNext:^(NSNotification * notification) {
@@ -215,11 +238,14 @@
      }];
     
     self.player = [AVPlayer playerWithPlayerItem:self.playerItem];
-    
+    if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"10.0")) {
+        self.player.automaticallyWaitsToMinimizeStalling = NO;
+    }
     /* Observe the AVPlayer "currentItem" property to find out when any
      AVPlayer replaceCurrentItemWithPlayerItem: replacement will/did
      occur.*/
     [[RACObserve(self.player, currentItem) takeUntilBlock:^BOOL(id  _Nullable x) {
+        @strongify(self)
         return self.resetAllSignal;
     }] subscribeNext:^(AVPlayerItem *playerItem) {
         @strongify(self)
@@ -232,10 +258,12 @@
     }];
 
     [[RACObserve(self.player, rate) takeUntilBlock:^BOOL(id  _Nullable x) {
+        @strongify(self)
         return self.resetAllSignal;
     }] subscribeNext:^(NSNumber *rate) {
         NSLog(@"rate:%@", rate);
     }];
+    
 }
 
 - (void)addApplicationNotification {
@@ -250,20 +278,6 @@
      subscribeNext:^(NSNotification * notification) {
          
      }];
-    
-    // 监测设备方向
-    [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-    [[[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIDeviceOrientationDidChangeNotification object:nil]
-     takeUntil:self.rac_willDeallocSignal]
-     subscribeNext:^(NSNotification * notification) {
-         
-     }];
-    
-    [[[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIApplicationDidChangeStatusBarOrientationNotification object:nil]
-     takeUntil:self.rac_willDeallocSignal]
-     subscribeNext:^(NSNotification * notification) {
-         
-     }];
 }
 
 #pragma mark - public methods
@@ -274,7 +288,10 @@
     if (self.player) {
         [self resetPlayer];
     }
-    _playbackItem = playerItem;
+    if (containerView) {
+        self.containterView = containerView;
+    }
+    self.controlView.item = playerItem;
     [self playbackVideo];
 }
 
@@ -282,9 +299,8 @@
  *  播放
  */
 - (void)play {
-//    [self.controlView zf_playerPlayBtnState:YES];
     if (self.status == BCCPlayerStatusPause) { self.status = BCCPlayerStatusPlaying; }
-//    self.isPauseByUser = NO;
+    self.pauseByUser = NO;
     [self.player play];
 }
 
@@ -292,9 +308,8 @@
  * 暂停
  */
 - (void)pause {
-//    [self.controlView zf_playerPlayBtnState:NO];
     if (self.status == BCCPlayerStatusPlaying) { self.status = BCCPlayerStatusPause;}
-//    self.isPauseByUser = YES;
+    self.pauseByUser = YES;
     [self.player pause];
 }
 
@@ -302,10 +317,6 @@
 
 - (void)seekToTime:(NSInteger)dragedSeconds completionHandler:(void (^)(BOOL finished))completionHandler {
     if (self.player.currentItem.status == AVPlayerItemStatusReadyToPlay) {
-        // seekTime:completionHandler:不能精确定位
-        // 如果需要精确定位，可以使用seekToTime:toleranceBefore:toleranceAfter:completionHandler:
-        // 转换成CMTime才能给player来控制播放进度
-//        [self.controlView zf_playerActivity:YES];
         [self.player pause];
         CMTime dragedCMTime = CMTimeMake(dragedSeconds, 1); //kCMTimeZero
         @weakify(self)
@@ -313,7 +324,10 @@
             @strongify(self)
             // 视频跳转回调
             if (completionHandler) { completionHandler(finished); }
-            [self.player play];
+            if (!self.pauseByUser) {
+                [self.player play];
+            }
+            
             self.seekTime = 0;
             if (!self.playerItem.isPlaybackLikelyToKeepUp && !self.localVedio) {
                 self.status = BCCPlayerStatusBuffering;
@@ -339,26 +353,21 @@
 
 - (void)bufferingSomeSeconds {
     self.status = BCCPlayerStatusBuffering;
-    // playbackBufferEmpty会反复进入，因此在bufferingOneSecond延时播放执行完之前再调用bufferingSomeSecond都忽略
     __block BOOL isBuffering = NO;
     if (isBuffering) return;
     isBuffering = YES;
-    
-    // 需要先暂停一小会之后再播放，否则网络状况不好的时候时间在走，声音播放不出来
     [self.player pause];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        
-        // 如果此时用户已经暂停了，则不再需要开启播放了
-//        if (self.isPauseByUser) {
-//            isBuffering = NO;
-//            return;
-//        }
-        
-        [self play];
-        // 如果执行了play还是没有播放则说明还没有缓存好，则再次缓存一段时间
+
         isBuffering = NO;
+        // 如果此时用户已经暂停了，则不再需要开启播放了
+        if (self.isPauseByUser) {
+            return;
+        }
+
+        [self play];
         if (!self.playerItem.isPlaybackLikelyToKeepUp) { [self bufferingSomeSeconds]; }
-        
+
     });
 }
 
@@ -369,6 +378,9 @@
                                                                  queue:nil
                                                             usingBlock:^(CMTime time){
         @strongify(self)
+        /** 拖动滑动条时不设置播放进度 */
+        if (self.controlView.isDragging) { return ; }
+                                                                
         AVPlayerItem *currentItem = self.playerItem;
         NSArray *loadedRanges = currentItem.seekableTimeRanges;
         if (loadedRanges.count > 0 && currentItem.duration.timescale != 0) {
@@ -396,87 +408,65 @@
     return(kCMTimeInvalid);
 }
 
-- (void)previewVedioInSamllWindown:(CMTime)previewAtTime {
-    [self.imageGenerator cancelAllCGImageGeneration];
-    self.imageGenerator.appliesPreferredTrackTransform = YES;
-    self.imageGenerator.maximumSize = CGSizeMake(100, 56);
-    AVAssetImageGeneratorCompletionHandler handler = ^(CMTime requestedTime, CGImageRef im, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error){
-        NSLog(@"%zd",result);
-        if (result != AVAssetImageGeneratorSucceeded) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-//                [controlView zf_playerDraggedTime:dragedSeconds sliderImage:self.thumbImg ? : ZFPlayerImage(@"ZFPlayer_loading_bgView")];
-            });
-        } else {
-//            self.thumbImg = [UIImage imageWithCGImage:im];
-            dispatch_async(dispatch_get_main_queue(), ^{
-//                [controlView zf_playerDraggedTime:dragedSeconds sliderImage:self.thumbImg ? : ZFPlayerImage(@"ZFPlayer_loading_bgView")];
-            });
-        }
-    };
-    [self.imageGenerator generateCGImagesAsynchronouslyForTimes:[NSArray arrayWithObject:[NSValue valueWithCMTime:previewAtTime]] completionHandler:handler];
-}
-
 - (void)switchPlayerViewFrame:(BOOL)toFullScreen {
-    
+    self.controlView.fullScreen = toFullScreen;
 }
 
 - (void)togglePlayerViewFrame:(BOOL)fullScreen {
-    
-    UIInterfaceOrientation orientation = UIInterfaceOrientationPortrait;
-    if (fullScreen) {
-        orientation = UIInterfaceOrientationLandscapeRight;
-    }
-    // 获取到当前状态条的方向
+    NSTimeInterval animateDuration = [UIApplication sharedApplication].statusBarOrientationAnimationDuration;
     UIInterfaceOrientation currentOrientation = [UIApplication sharedApplication].statusBarOrientation;
-    // 判断如果当前方向和要旋转的方向一致,那么不做任何操作
-    if (currentOrientation == orientation) { return; }
-    
-    // 根据要旋转的方向,使用Masonry重新修改限制
-    if (orientation != UIInterfaceOrientationPortrait) {//
-        // 这个地方加判断是为了从全屏的一侧,直接到全屏的另一侧不用修改限制,否则会出错;
-        if (currentOrientation == UIInterfaceOrientationPortrait) {
-            [self removeFromSuperview];
-   
+    [self removeFromSuperview];
+    if (fullScreen) {
+        
+        [UIView animateWithDuration:animateDuration animations:^{
+            
             [[UIApplication sharedApplication].keyWindow addSubview:self];
-            self.frame = [UIScreen mainScreen].bounds;
-        }
+            CGRect bound   = [UIScreen mainScreen].bounds;
+            self.frame     = CGRectMake(0, 0, bound.size.height, bound.size.width);
+            self.transform = CGAffineTransformMakeRotation(M_PI_2);
+            self.center    = [UIApplication sharedApplication].keyWindow.center;
+            if (currentOrientation != UIInterfaceOrientationLandscapeRight) {
+                [[UIApplication sharedApplication] setStatusBarOrientation:UIInterfaceOrientationLandscapeRight animated:NO];
+            }
+            
+        } completion:^(BOOL finished) {
+            if (finished) {
+            }
+            
+        }];
+    } else {
+
+        [self.containterView addSubview:self];
+        [UIView animateWithDuration:animateDuration animations:^{
+            
+            self.transform = CGAffineTransformIdentity;
+            self.frame = self.containterView.bounds;
+//            self.center = self.containterView.center;
+            if (currentOrientation != UIInterfaceOrientationPortrait) {
+                [[UIApplication sharedApplication] setStatusBarOrientation:UIInterfaceOrientationPortrait animated:YES];
+            }
+            
+        } completion:^(BOOL finished) {
+            
+        }];
     }
-    // iOS6.0之后,设置状态条的方法能使用的前提是shouldAutorotate为NO,也就是说这个视图控制器内,旋转要关掉;
-    // 也就是说在实现这个方法的时候-(BOOL)shouldAutorotate返回值要为NO
-    [[UIApplication sharedApplication] setStatusBarOrientation:orientation animated:NO];
-    // 获取旋转状态条需要的时间:
-    [UIView beginAnimations:nil context:nil];
-    [UIView setAnimationDuration:0.3];
-    // 更改了状态条的方向,但是设备方向UIInterfaceOrientation还是正方向的,这就要设置给你播放视频的视图的方向设置旋转
-    // 给你的播放视频的view视图设置旋转
-    self.transform = CGAffineTransformIdentity;
-    self.transform = [self transformRotationAngle];
-    // 开始旋转
-    [UIView commitAnimations];
+    
     
 }
 
 - (CGAffineTransform)transformRotationAngle {
-    // 状态条的方向已经设置过,所以这个就是你想要旋转的方向
     UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
-    // 根据要进行旋转的方向来计算旋转的角度
     if (orientation == UIInterfaceOrientationPortrait) {
         return CGAffineTransformIdentity;
-    } else if (orientation == UIInterfaceOrientationLandscapeLeft){
+    } else if (orientation == UIInterfaceOrientationLandscapeLeft) {
         return CGAffineTransformMakeRotation(-M_PI_2);
-    } else if(orientation == UIInterfaceOrientationLandscapeRight){
+    } else if(orientation == UIInterfaceOrientationLandscapeRight) {
         return CGAffineTransformMakeRotation(M_PI_2);
     }
     return CGAffineTransformIdentity;
 }
 
 #pragma mark - setters
-
-- (void)setStatus:(BCCPlayerStatus)status {
-    [self willChangeValueForKey:@"status"];
-    _status = status;
-    [self didChangeValueForKey:@"status"];
-}
 
 
 #pragma mark - properties

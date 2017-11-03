@@ -7,6 +7,7 @@
 //
 
 #import "BCCTopView.h"
+#import "UIImage+BCCAdd.h"
 
 //third open source lib
 #import <ReactiveObjC/ReactiveObjC.h>
@@ -27,6 +28,7 @@
 @implementation BCCTopView
 
 - (void)dealloc {
+    NSLog(@"BCCTopView dealloc");
     [self.subject sendCompleted];
 }
 
@@ -70,6 +72,8 @@
          [self.subject sendNext:@(BCCTopBackButton)];
      }];
     [self addSubview:self.backButton];
+    
+    /**
     [[self.qualityButton rac_signalForControlEvents:UIControlEventTouchUpInside]
      subscribeNext:^(__kindof UIControl * _Nullable x) {
          @strongify(self)
@@ -85,18 +89,12 @@
          [self.subject sendNext:@(BCCTopSettingButton)];
      }];
     [self addSubview:self.settingsButton];
-    
+    */
     [[RACObserve(self, title) skip:1] subscribeNext:^(NSString *title) {
         @strongify(self)
         [self.backButton setTitle:title forState:UIControlStateNormal];
-        if (title.length > 0) {
-            self.qualityButton.hidden = NO;
-            self.settingsButton.hidden = NO;
-        } else {
-            self.qualityButton.hidden = YES;
-            self.settingsButton.hidden = YES;
-        }
     }];
+     
 }
 
 #pragma mark - getters setters
@@ -104,7 +102,7 @@
 - (UIButton *)backButton {
     if (_backButton == nil) {
         _backButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [_backButton setImage:[UIImage imageNamed:@"course_player_back_btn"] forState:UIControlStateNormal];
+        [_backButton setImage:[UIImage bcc_imageNamed:@"candy_back_btn"] forState:UIControlStateNormal];
         _backButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
         _backButton.titleLabel.font = [UIFont systemFontOfSize:16];
         [_backButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
@@ -128,7 +126,7 @@
 - (UIButton *)settingsButton {
     if (_settingsButton == nil) {
         _settingsButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [_settingsButton setImage:[UIImage imageNamed:@"course_player_settings_btn"] forState:UIControlStateNormal];
+        [_settingsButton setImage:[UIImage imageNamed:@"candy_settings_btn"] forState:UIControlStateNormal];
         _settingsButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
 
     }

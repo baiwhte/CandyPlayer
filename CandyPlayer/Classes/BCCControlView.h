@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 
 @class RACReplaySubject;
+@class BCCPlayerItem;
 
 @interface BCCControlView : UIView
 
@@ -20,7 +21,10 @@
 
 @property (nonatomic, assign) Float64 currentTime;
 @property (nonatomic, assign) Float64 duration;
+@property (nonatomic, assign, readonly) BOOL isDragging;
 
 @property (nonatomic, assign) CGFloat bufferValue;
+
+@property (nonatomic, strong) BCCPlayerItem *item;
 
 @end

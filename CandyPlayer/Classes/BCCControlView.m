@@ -7,9 +7,10 @@
 //
 
 #import "BCCControlView.h"
-
 #import "BCCTopView.h"
 #import "BCCBottomView.h"
+
+#import "BCCPlayerItem.h"
 
 #import <ReactiveObjC/ReactiveObjC.h>
 
@@ -29,11 +30,17 @@
 /*! 拖动时滑块的最新位置  */
 @property (nonatomic, assign) CGFloat                  lastDragValue;
 
+@property (nonatomic, assign) BOOL isDragging;
+
 @property (nonatomic, assign) BOOL hasAddTopView;
 
 @end
 
 @implementation BCCControlView
+
+- (void)dealloc {
+    NSLog(@"BCCControlView dealloc");
+}
 
 - (instancetype)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
@@ -73,26 +80,11 @@
 //    [self addSubview:self.topView];
     [self addSubview:self.indicatorView];
     [self addSubview:self.bottomView];
-    @weakify(self)
+    
 
     _sliderSubject = [RACReplaySubject subject];
-    [self.bottomView.subject subscribeNext:^(NSNumber *number) {
-        @strongify(self)
-        if ([number isKindOfClass:NSClassFromString(@"__NSCFBoolean")]) {
-            [self.sliderSubject sendNext:number];
-        } else {
-            BOOL style = false;
-            CGFloat value   = number.floatValue - self.lastDragValue;
-            if (value > 0) { style = YES; }
-            if (value < 0) { style = NO; }
-            if (value == 0) { return; }
-            self.lastDragValue = number.floatValue;
-            //计算出拖动的当前秒数
-            CGFloat dragedSeconds = floorf(self.duration * number.floatValue);
-    
-        }
-    }];
-    
+
+    @weakify(self)
     RACSignal *bufferSignal = RACObserve(self, isBuffering);
     [bufferSignal subscribeNext:^(NSNumber * x) {
         @strongify(self)
@@ -109,7 +101,16 @@
     RACChannelTo(self.bottomView, currentTime) = RACChannelTo(self, currentTime);
     RACChannelTo(self.bottomView, duration)    = RACChannelTo(self, duration);
 
-
+    RACChannelTo(self.bottomView, isDragging)  = RACChannelTo(self, isDragging);
+    [[RACObserve(self, fullScreen) skip:1]
+     subscribeNext:^(NSNumber * x) {
+         @strongify(self)
+         if (!x.boolValue) {
+             [self removeTopView];
+         } else {
+             [self addTopView];
+         }
+     }];
 }
 
 #pragma mark - private methods
@@ -123,10 +124,46 @@
 }
 
 - (void)autoHideControlView {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(showControlView) object:nil];
-    [[RACScheduler scheduler] afterDelay:5 schedule:^{
-        
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hideControlView) object:nil];
+    [self performSelector:@selector(hideControlView) withObject:nil afterDelay:7];
+}
+
+- (void)cancelAutoHide {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hideControlView) object:nil];
+}
+
+- (void)addTopView {
+    [self.topView removeFromSuperview];
+    self.hasAddTopView = YES;
+    [self addSubview:self.topView];
+    
+    self.topView.title = self.fullScreen ? self.item.title : @"";
+    self.bottomView.hideScreenButton = ![[self.item.vedioURL scheme] hasPrefix:@"http"];
+    @weakify(self)
+    [[self.topView.subject takeUntilBlock:^BOOL(id  _Nullable x) {
+        @strongify(self)
+        return !self.hasAddTopView;
+    }] subscribeNext:^(NSNumber * x) {
+        @strongify(self)
+        switch (x.integerValue) {
+            case BCCTopBackButton:
+                self.fullScreen = NO;
+                break;
+            case BCCTopQualityButton:
+                break;
+            case BCCTopSettingButton:
+                break;
+            default:
+                break;
+        }
     }];
+    
+
+}
+
+- (void)removeTopView {
+    self.hasAddTopView = NO;
+    [self.topView removeFromSuperview];
 }
 
 #pragma mark - properties

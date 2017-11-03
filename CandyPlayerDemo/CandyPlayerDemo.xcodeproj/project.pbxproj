@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		0EDC19D3B191AE300CEC68C2 /* libPods-CandyPlayerDemo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 43926403BAB0F57646ED2CCD /* libPods-CandyPlayerDemo.a */; };
+		366696951FABF95D0062588D /* PlayerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 366696941FABF95D0062588D /* PlayerViewController.m */; };
+		B481B68D1FAC1A1700B60FB8 /* BCCNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = B481B68C1FAC1A1700B60FB8 /* BCCNavigationController.m */; };
 		B482EE4C1FA95E3D001BE0FC /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B482EE4B1FA95E3D001BE0FC /* AppDelegate.m */; };
 		B482EE4F1FA95E3D001BE0FC /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B482EE4E1FA95E3D001BE0FC /* ViewController.m */; };
 		B482EE521FA95E3D001BE0FC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B482EE501FA95E3D001BE0FC /* Main.storyboard */; };
@@ -17,7 +19,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		366696931FABF95D0062588D /* PlayerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PlayerViewController.h; sourceTree = "<group>"; };
+		366696941FABF95D0062588D /* PlayerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PlayerViewController.m; sourceTree = "<group>"; };
 		43926403BAB0F57646ED2CCD /* libPods-CandyPlayerDemo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CandyPlayerDemo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B481B68B1FAC1A1700B60FB8 /* BCCNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BCCNavigationController.h; sourceTree = "<group>"; };
+		B481B68C1FAC1A1700B60FB8 /* BCCNavigationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BCCNavigationController.m; sourceTree = "<group>"; };
 		B482EE471FA95E3D001BE0FC /* CandyPlayerDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CandyPlayerDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B482EE4A1FA95E3D001BE0FC /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		B482EE4B1FA95E3D001BE0FC /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -83,6 +89,10 @@
 				B482EE551FA95E3D001BE0FC /* LaunchScreen.storyboard */,
 				B482EE581FA95E3D001BE0FC /* Info.plist */,
 				B482EE591FA95E3D001BE0FC /* main.m */,
+				366696931FABF95D0062588D /* PlayerViewController.h */,
+				366696941FABF95D0062588D /* PlayerViewController.m */,
+				B481B68B1FAC1A1700B60FB8 /* BCCNavigationController.h */,
+				B481B68C1FAC1A1700B60FB8 /* BCCNavigationController.m */,
 			);
 			path = CandyPlayerDemo;
 			sourceTree = "<group>";
@@ -224,6 +234,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				B482EE4F1FA95E3D001BE0FC /* ViewController.m in Sources */,
+				B481B68D1FAC1A1700B60FB8 /* BCCNavigationController.m in Sources */,
+				366696951FABF95D0062588D /* PlayerViewController.m in Sources */,
 				B482EE5A1FA95E3D001BE0FC /* main.m in Sources */,
 				B482EE4C1FA95E3D001BE0FC /* AppDelegate.m in Sources */,
 			);
@@ -363,6 +375,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 94V8YL7898;
 				INFOPLIST_FILE = CandyPlayerDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.baiwhte.CandyPlayerDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -378,6 +391,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 94V8YL7898;
 				INFOPLIST_FILE = CandyPlayerDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.baiwhte.CandyPlayerDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";

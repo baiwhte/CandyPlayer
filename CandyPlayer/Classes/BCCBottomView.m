@@ -27,7 +27,7 @@
 /*! 设置播放速率按钮  */
 @property (nonatomic, strong) UIButton *rateButton;
 
-@property (nonatomic, assign) BOOL ignoreCurrentValue;
+@property (nonatomic, assign) BOOL isDragging;
 
 @property (nonatomic, strong) RACSequence    *rateSignal;
 @property (nonatomic, strong) RACSequence    *tailSignal;
@@ -37,7 +37,7 @@
 @implementation BCCBottomView
 
 - (void)dealloc {
-    NSLog(@"release");
+    NSLog(@"BCCBottomView dealloc");
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -125,7 +125,8 @@
     [[[RACSignal combineLatest:@[currentTimeSignal,
                                 durationSignal]]
       filter:^BOOL(RACTuple * _Nullable x) {
-          return !self.ignoreCurrentValue;
+          @strongify(self)
+          return !self.isDragging;
       }]
      subscribeNext:^(RACTuple * tuple) {
          @strongify(self)
@@ -149,15 +150,15 @@
      }];
     
     [[self.moveSlider rac_signalForControlEvents:UIControlEventTouchDown]
-     subscribeNext:^(__kindof UIControl * _Nullable x) {
+     subscribeNext:^(UISlider * slider) {
          @strongify(self)
-         self.ignoreCurrentValue = YES;
+         self.isDragging = YES;
      }];
     
-    [[self.moveSlider rac_signalForControlEvents:UIControlEventTouchUpOutside | UIControlEventTouchUpInside]
-     subscribeNext:^(__kindof UIControl * _Nullable x) {
+    [[self.moveSlider rac_signalForControlEvents:UIControlEventTouchUpOutside | UIControlEventTouchUpInside | UIControlEventTouchCancel]
+     subscribeNext:^(UISlider * slider) {
          @strongify(self)
-         self.ignoreCurrentValue = NO;
+         self.isDragging = NO;
      }];
     
     [[self.moveSlider rac_newValueChannelWithNilValue:@0]
@@ -165,27 +166,10 @@
          @strongify(self)
          float value = [x floatValue];
          self.currentTime = value * self.duration;
+
      }];
 }
 
-
-
-#pragma mark - properties
-
-#pragma mark - private selectors
-
-- (NSString *)formatSecondsToString:(NSInteger)seconds {
-    NSString *hhmmss = nil;
-    if (seconds < 0) {
-        return @"00:00:00";
-    }
-    int h = (int)round((seconds % 86400) / 3600);
-    int m = (int)round((seconds % 3600) / 60);
-    int s = (int)round(seconds % 60);
-    
-    hhmmss = [NSString stringWithFormat:@"%02d:%02d:%02d", h, m, s];
-    return hhmmss;
-}
 
 #pragma mark - getters
 
@@ -260,8 +244,7 @@
         _moveSlider.minimumValue = 0.0f;
         _moveSlider.maximumValue = 1.0f;
         _moveSlider.value = 0.0f;
-        _moveSlider.continuous = NO;
-        
+        _moveSlider.continuous = YES;
         _moveSlider.maximumTrackTintColor = [UIColor colorWithWhite:0.8 alpha:1];
         _moveSlider.minimumTrackTintColor = [UIColor colorWithWhite:0.8 alpha:1];
         UIImage *thumbImage = [UIImage bcc_imageWithColor:[UIColor whiteColor] size:CGSizeMake(10, 10)];

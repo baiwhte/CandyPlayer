@@ -22,7 +22,7 @@ typedef NS_ENUM(NSInteger, BCCPlayerStatus) {
 
 @interface BCCPlayerView : UIView
 
-@property (nonatomic, assign) BOOL allowPreview;
+//@property (nonatomic, assign) BOOL allowPreview;
 @property (nonatomic, assign) BOOL allowPlaybackInBackground;
 
 /*!  Device is horizontal screen 是否为横屏 */
