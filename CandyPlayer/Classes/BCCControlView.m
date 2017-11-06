@@ -18,6 +18,7 @@
 
 @property (nonatomic, strong) BCCTopView              *topView;
 @property (nonatomic, strong) BCCBottomView           *bottomView;
+@property (nonatomic, assign) BOOL                    showing;
 
 //@property (nonatomic, strong) BCCVideoTypeView *videoTypeView;
 //@property (nonatomic, strong) BCCSettingView *settingView;
@@ -67,7 +68,9 @@
     
     self.bottomView.frame = CGRectMake(0, size.height - height, size.width, height);
     if (self.hasAddTopView) {
-        self.topView.frame = CGRectMake(0, 0, size.width, height + 20);
+        CGFloat statusBarHeight = CGRectGetHeight([UIApplication sharedApplication].statusBarFrame);
+        statusBarHeight = statusBarHeight > 0 ?: 20;
+        self.topView.frame = CGRectMake(0, 0, size.width, height + statusBarHeight);
     }
     self.indicatorView.center = self.center;
     
@@ -102,7 +105,7 @@
     RACChannelTo(self.bottomView, duration)    = RACChannelTo(self, duration);
 
     RACChannelTo(self.bottomView, isDragging)  = RACChannelTo(self, isDragging);
-    [[RACObserve(self, fullScreen) skip:1]
+    [[RACObserve(self, fullScreen) distinctUntilChanged]
      subscribeNext:^(NSNumber * x) {
          @strongify(self)
          if (!x.boolValue) {
@@ -110,17 +113,38 @@
          } else {
              [self addTopView];
          }
+         [self showControlView];
      }];
 }
 
 #pragma mark - private methods
 
 - (void)showControlView {
-    
+    if (self.showing) { return; }
+    self.showing = YES;
+    [self cancelAutoHide];
+    self.topView.alpha = 0;
+    self.bottomView.alpha = 0;
+    [UIView animateWithDuration:0.25 animations:^{
+        self.topView.alpha = 1;
+        self.bottomView.alpha = 1;
+    } completion:^(BOOL finished) {
+        [self autoHideControlView];
+    }];
 }
 
 - (void)hideControlView {
-    
+    if (!self.showing) { return; }
+    self.showing = NO;
+    [self cancelAutoHide];
+    self.topView.alpha = 1;
+    self.bottomView.alpha = 1;
+    [UIView animateWithDuration:0.25 animations:^{
+        self.topView.alpha = 0;
+        self.bottomView.alpha = 0;
+    } completion:^(BOOL finished) {
+        
+    }];
 }
 
 - (void)autoHideControlView {

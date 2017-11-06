@@ -18,4 +18,8 @@
     return self.topViewController.shouldAutorotate;
 }
 
+- (BOOL)prefersStatusBarHidden {
+    return self.topViewController.prefersStatusBarHidden;
+}
+
 @end

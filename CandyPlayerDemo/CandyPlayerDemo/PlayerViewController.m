@@ -72,6 +72,10 @@
     return UIInterfaceOrientationPortrait;
 }
 
+- (BOOL)prefersStatusBarHidden {
+    return NO;
+}
+
 /*
 #pragma mark - Navigation
 

@@ -12,8 +12,6 @@
 //third open source lib
 #import <ReactiveObjC/ReactiveObjC.h>
 
-#define ScreenSize  UIScreen.mainScreen.bounds.size
-
 @interface BCCTopView()
 /*! 返回按钮  */
 @property (nonatomic, strong) UIButton *backButton;
@@ -44,21 +42,31 @@
     [super layoutSubviews];
     CGSize size = self.bounds.size;
     if (CGSizeEqualToSize(size, CGSizeZero)) { return; }
-
+    
+    CGFloat orignY = CGRectGetHeight([UIApplication sharedApplication].statusBarFrame);
+    /** orignY 为状态栏的高度
+     *  由于iOS8以后默认横屏后隐藏状态栏，所以要在当前ViewController中
+     *  设置 - (BOOL)prefersStatusBarHidden { return NO; } ,否则
+     *  orignY 的值为0.
+     */
+    if (orignY == 0.0f) {
+        orignY = 20;
+    }
+    /*
     self.settingsButton.frame = CGRectMake(size.width - 10 - 30,
-                                           20,
-                                           30,
-                                           size.height - 20);
+                                           orignY,
+                                           size.width * 0.5,
+                                           size.height - orignY);
     
     self.qualityButton.frame = CGRectMake(self.settingsButton.frame.origin.x - 10 - 30,
-                                          20,
+                                          orignY,
                                           30,
                                           size.height - 20);
-    
+    */
     self.backButton.frame = CGRectMake(10,
-                                       20,
-                                       self.qualityButton.frame.origin.x - 10 - 10,
-                                       size.height - 20);
+                                       orignY,
+                                       size.width * 0.5,
+                                       size.height - orignY);
     
 }
 

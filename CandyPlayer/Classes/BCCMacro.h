@@ -12,4 +12,6 @@
 
 #define ScreenSize  UIScreen.mainScreen.bounds.size
 
+#define IPHONEX     (MAX(ScreenSize.width, ScreenSize.height) == 812)
+
 #endif /* BCCMacro_h */

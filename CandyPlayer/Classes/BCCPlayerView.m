@@ -84,6 +84,13 @@
     }
 }
 
+- (void)safeAreaInsetsDidChange {
+    [super safeAreaInsetsDidChange];
+    NSLog(@"safeAreaInsetsDidChange");
+}
+
+
+
 - (void)initialize {
     [self addSubview:self.playbackView];
     [self addSubview:self.controlView];
@@ -422,8 +429,14 @@
             
             [[UIApplication sharedApplication].keyWindow addSubview:self];
             CGRect bound   = [UIScreen mainScreen].bounds;
-            self.frame     = CGRectMake(0, 0, bound.size.height, bound.size.width);
             self.transform = CGAffineTransformMakeRotation(M_PI_2);
+            if (IPHONEX) {
+                self.frame = CGRectMake(0, 0,
+                                        bound.size.width,
+                                        bound.size.height - self.safeAreaInsets.top);
+            } else {
+                self.frame = [UIScreen mainScreen].bounds;
+            }
             self.center    = [UIApplication sharedApplication].keyWindow.center;
             if (currentOrientation != UIInterfaceOrientationLandscapeRight) {
                 [[UIApplication sharedApplication] setStatusBarOrientation:UIInterfaceOrientationLandscapeRight animated:NO];
@@ -432,7 +445,10 @@
         } completion:^(BOOL finished) {
             if (finished) {
             }
-            
+            if (IPHONEX) {
+                [self.playbackView setVideoFillMode:AVLayerVideoGravityResizeAspectFill];
+//                self.layoutMargins = UIEdgeInsetsMake(0, 20, 0, 0);
+            }
         }];
     } else {
 
@@ -447,7 +463,10 @@
             }
             
         } completion:^(BOOL finished) {
-            
+            if (IPHONEX) {
+                [self.playbackView setVideoFillMode:AVLayerVideoGravityResizeAspect];
+                self.layoutMargins = UIEdgeInsetsZero;
+            }
         }];
     }
     

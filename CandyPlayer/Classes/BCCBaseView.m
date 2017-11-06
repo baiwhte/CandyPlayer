@@ -9,6 +9,13 @@
 
 @implementation BCCBaseView
 
+- (instancetype)initWithFrame:(CGRect)frame {
+    if (self = [super initWithFrame:frame]) {
+        self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.2];
+    }
+    return self;
+}
+/**
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
     CGRect bounds = self.bounds;
     //若原热区小于44x44，则放大热区，否则保持原大小不变
@@ -17,5 +24,6 @@
     bounds = CGRectInset(bounds, -0.5 * widthDelta, -0.5 * heightDelta);
     return CGRectContainsPoint(bounds, point);
 }
+ */
 
 @end
