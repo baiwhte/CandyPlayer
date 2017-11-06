@@ -12,9 +12,16 @@
 
 #import "BCCPlayerItem.h"
 
+#import <MediaPlayer/MediaPlayer.h>
 #import <ReactiveObjC/ReactiveObjC.h>
 
-@interface BCCControlView()
+typedef NS_ENUM(NSInteger, BCCDirection) {
+    BCCLeftOrRight,
+    BCCUpOrDown,
+    BCCNone
+};
+
+@interface BCCControlView()<UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) BCCTopView              *topView;
 @property (nonatomic, strong) BCCBottomView           *bottomView;
@@ -34,6 +41,29 @@
 @property (nonatomic, assign) BOOL isDragging;
 
 @property (nonatomic, assign) BOOL hasAddTopView;
+
+//单击手势
+@property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
+//双击手势
+@property (nonatomic, strong) UITapGestureRecognizer *doubleTapGesture;
+//滑动手势
+@property (nonatomic, strong) UIPanGestureRecognizer *panGesture;
+
+@property (nonatomic, strong) UISwipeGestureRecognizer *swipeLeftGesture;
+
+@property (nonatomic, strong) MPVolumeView *volumeView;
+@property (nonatomic, strong) UISlider * volumeViewSlider;
+
+//滑动的起始点
+@property (nonatomic, assign) CGPoint startPoint;
+@property (nonatomic, assign) BCCDirection direction;
+
+@property (nonatomic, assign) CGFloat oldLumina;
+@property (nonatomic, assign) CGFloat oldVolume;
+@property (nonatomic, assign) CGFloat luminance;//亮度(0-1)
+
+@property (nonatomic, assign) CGFloat oldTime;
+@property (nonatomic, assign) CGFloat seekTime;
 
 @end
 
@@ -190,6 +220,162 @@
     [self.topView removeFromSuperview];
 }
 
+- (void)addGestures {
+    @weakify(self)
+    [[self.tapGesture rac_gestureSignal] subscribeNext:^(UITapGestureRecognizer * x) {
+        @strongify(self)
+        if (!self.showing) {
+            [self showControlView];
+        }
+        else {
+            [self hideControlView];
+        }
+    }];
+    self.tapGesture.delegate = self;
+    [self addGestureRecognizer:self.tapGesture];
+    [[self.doubleTapGesture rac_gestureSignal] subscribeNext:^(UITapGestureRecognizer * x) {
+        @strongify(self)
+        self.isPlayback = !self.isPlayback;
+    }];
+    [self addGestureRecognizer:self.doubleTapGesture];
+    [[self.panGesture rac_gestureSignal] subscribeNext:^(UIPanGestureRecognizer * x) {
+        @strongify(self)
+        switch (x.state) {
+            case UIGestureRecognizerStateBegan:
+                self.startPoint = [x translationInView:self];
+                self.oldLumina = self.luminance;
+                self.oldVolume = self.volumeViewSlider.value;
+                
+                self.oldTime = self.currentTime;
+                self.seekTime = 0;
+                break;
+            case UIGestureRecognizerStateChanged: {
+                CGPoint currentPoint = [x translationInView:self];
+                if (self.direction == BCCNone) {
+                    if (ABS(currentPoint.x - self.startPoint.x) >
+                        ABS(currentPoint.y - self.startPoint.y)) {
+                        self.direction = BCCLeftOrRight;
+                    }  else {
+                        //根据触发位置来决定（左边亮度，右边音量）
+                        self.direction = BCCUpOrDown;
+                    }
+                }
+                
+                if (self.direction == BCCNone) {
+                    return ;
+                }
+                CGFloat screenScale = [UIScreen mainScreen].scale;
+                if (self.direction == BCCUpOrDown) {
+                    
+                    CGFloat uint = (currentPoint.y - self.startPoint.y) / (5 * screenScale);
+                    if (ABS(uint) < 1) {
+                        return ;
+                    }
+                    if ([x locationInView:self].x < CGRectGetMidX(self.bounds)) {
+                        [self changeLumina:-uint];
+                    } else {
+                        [self changeVolume:-uint];
+                    }
+                    
+                } else if (self.direction == BCCLeftOrRight) {
+                    CGFloat uint = (currentPoint.x - self.startPoint.x) / (5 * screenScale);
+                    if (ABS(uint) < 1 || self.isBuffering) {
+                        return ;
+                    }
+                    NSInteger time = self.oldTime + uint;
+                    if (time < 0) {
+                        time = 0;
+                    } else if (time > self.duration) {
+                        time = self.duration;
+                    }
+                    
+                    if (time == 0) {
+                        
+                    }
+                    self.seekTime = time / self.duration;
+                }
+                break;
+            }
+            case UIGestureRecognizerStateEnded:
+                if (self.direction == BCCLeftOrRight) {
+                    [self.sliderSubject sendNext: RACTuplePack(@1, @(self.seekTime))];
+                }
+                self.direction = BCCNone;
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"PlayerOperation" object:nil];
+                break;
+            case UIGestureRecognizerStateCancelled:
+                self.direction = BCCNone;
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"PlayerOperation" object:nil];
+                break;
+            default:
+                self.direction = BCCNone;
+                break;
+        }
+    }];
+    [self addGestureRecognizer:self.panGesture];
+}
+
+- (void)setLuminance:(CGFloat)luminance {
+    
+    if (luminance < 0.1) {
+        luminance = 0.1;
+    } else if (luminance > 1) {
+        luminance = 1;
+    }
+    [[UIScreen mainScreen] setBrightness:luminance];
+    
+}
+
+- (CGFloat)luminance {
+    return [UIScreen mainScreen].brightness;
+}
+
+- (void)changeLumina:(NSInteger)change {
+    self.luminance = _oldLumina + change * 0.05;
+}
+
+- (float)volume {
+    return self.volumeViewSlider.value;
+}
+
+- (void)setVolume:(float)value {
+    self.volumeViewSlider.value = value;
+}
+
+- (void)changeVolume:(NSInteger)change {
+    float newVolume = _oldVolume + change * 0.05;
+    if (newVolume > 1) {
+        newVolume = 1;
+    } else if (newVolume < 0) {
+        newVolume = 0;
+    }
+    self.volumeViewSlider.value = newVolume;
+}
+
+#pragma mark - UIGestureRecognizerDelegate
+
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+    NSString *className = NSStringFromClass([touch.view class]);
+    
+    if ([className isEqualToString:@"UITableViewCellContentView"]) {
+        return NO;
+    }
+    if (![className isEqualToString:@"BCCControlView"]) {
+        return NO;
+    }
+    
+    if (self.panGesture == gestureRecognizer) {
+        CGPoint startPoint = [touch locationInView:self];
+        CGRect rect = self.bounds;
+        CGRect rightRect = CGRectMake(rect.size.width * 0.9, 0, rect.size.width * 0.1, rect.size.height);
+        if (CGRectContainsPoint(rightRect, startPoint)) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 #pragma mark - properties
 
 - (BCCTopView *)topView {
@@ -212,6 +398,52 @@
         _indicatorView.hidesWhenStopped = YES;
     }
     return _indicatorView;
+}
+
+- (UITapGestureRecognizer *)tapGesture {
+    if (_tapGesture == nil) {
+        _tapGesture = [[UITapGestureRecognizer alloc] init];
+        _tapGesture.numberOfTapsRequired = 1;
+        _tapGesture.numberOfTouchesRequired = 1;
+    }
+    return _tapGesture;
+}
+
+- (UITapGestureRecognizer *)doubleTapGesture {
+    if (_doubleTapGesture == nil) {
+        _doubleTapGesture = [[UITapGestureRecognizer alloc] init];
+        _doubleTapGesture.numberOfTapsRequired = 2;
+    }
+    return _doubleTapGesture;
+}
+
+- (UIPanGestureRecognizer *)panGesture {
+    if (_panGesture == nil) {
+        _panGesture = [[UIPanGestureRecognizer alloc] init];
+        _panGesture.minimumNumberOfTouches = 1;
+        _panGesture.maximumNumberOfTouches = 1;
+        //        _panGesture.delegate = self;
+    }
+    return _panGesture;
+}
+
+- (UISwipeGestureRecognizer *)swipeLeftGesture {
+    if (_swipeLeftGesture == nil) {
+        _swipeLeftGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handlerSwipe:)];
+        //
+        _swipeLeftGesture.direction = UISwipeGestureRecognizerDirectionLeft;
+        [self addGestureRecognizer:_swipeLeftGesture];
+        [_swipeLeftGesture requireGestureRecognizerToFail:_panGesture];
+    }
+    return _swipeLeftGesture;
+}
+
+
+- (void)setIsReadyToPlay:(BOOL)isReadyToPlay {
+    _isReadyToPlay = isReadyToPlay;
+    if (!isReadyToPlay) {
+        [self addGestures];
+    }
 }
 
 @end

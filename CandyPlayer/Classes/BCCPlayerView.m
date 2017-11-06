@@ -178,11 +178,14 @@
              } else {
                  self.status = BCCPlayerStatusPlaying;
              }
+             self.controlView.isReadyToPlay = YES;
 //             self.player.muted = self.mute;
          } else if (playerItemStatus == AVPlayerItemStatusFailed) {
              self.status = BCCPlayerStatusFailed;
+             self.controlView.isReadyToPlay = NO;
          } else if (playerItemStatus == AVPlayerItemStatusUnknown) {
              [self removeTimeObserve];
+             self.controlView.isReadyToPlay = NO;
          }
     }];
     

@@ -18,6 +18,7 @@
 @property (nonatomic, assign) BOOL fullScreen;
 @property (nonatomic, assign) BOOL isPlayback;
 @property (nonatomic, assign) BOOL isBuffering;
+@property (nonatomic, assign) BOOL isReadyToPlay;
 
 @property (nonatomic, assign) Float64 currentTime;
 @property (nonatomic, assign) Float64 duration;
