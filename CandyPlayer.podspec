@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "CandyPlayer"
-  s.version      = "0.0.1"
+  s.version      = "1.0.0"
   s.summary      = "a customize media playback UI base on avplayer and rac."
 
   # This description is used to generate tags and improve search results.
